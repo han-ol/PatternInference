@@ -1,0 +1,7 @@
+/data
+/figures
+**/__pycache__
+*.pdf
+*.egg-info
+**/.ipynb_checkpoints
+.CondaPkg
