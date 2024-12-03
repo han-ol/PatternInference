@@ -1,5 +1,6 @@
 /data
 /figures
+/notebooks
 **/__pycache__
 *.pdf
 *.egg-info
