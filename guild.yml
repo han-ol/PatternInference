@@ -1,0 +1,31 @@
+- config: sourcecode-exclude-unused
+  sourcecode:
+    - exclude:
+        dir:
+          - deps/bayesflow/examples
+          - deps/bayesflow/docsrc
+          - deps/bayesflow/img
+          - deps/bayesflow/tests
+          - notebooks
+  # Note: GuildAI already ignores contents of .gitignore (including the data directory)
+
+- model: gm-abi
+  extends:
+    - sourcecode-exclude-unused
+  operations:
+
+    train-pure-learner:
+      main: src.train.gm_pure_learner
+      flags-dest: globals
+      flags-import: all
+      output-scalars:
+        - step: 'Epoch (\step)'
+        - '- (\key): (\value)'
+
+    train-concat-hybrid:
+      main: src.train.gm_concat_hybrid
+      flags-dest: globals
+      flags-import: all
+      output-scalars:
+        - step: 'Epoch (\step)'
+        - '- (\key): (\value)'
