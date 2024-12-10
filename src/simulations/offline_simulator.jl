@@ -53,10 +53,10 @@ end
 
 domain_size = 64
 tspan = (0, 1500)
-num_simulations = 4
+num_simulations = 8200
 
 path = "data/GM-001"
-name = "GM-001-019-test-$(domain_size)"
+name = "GM-001-019-$(domain_size)"
 full_save_path = "$path" * "/$name.pkl"
 
 if !ispath(path)
