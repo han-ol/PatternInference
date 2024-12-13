@@ -29,3 +29,11 @@
       output-scalars:
         - step: 'Epoch (\step)'
         - '- (\key): (\value)'
+
+    train-pure-expert:
+      main: src.train.gm_pure_expert
+      flags-dest: globals
+      flags-import: all
+      output-scalars:
+        - step: 'Epoch (\step)'
+        - '- (\key): (\value)'
