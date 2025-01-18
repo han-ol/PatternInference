@@ -1,5 +1,7 @@
 ---
-title: "Conditioning a complex stochastic spatial simulator on observations"
+title: "Probabilistic Inversion of a PDE-Solver"
+subtitle: "Conditioning a complex stochastic spatial simulator on observations"
+date: 2025-01-22
 author:
   - name: "Hans Olischläger"
     email: hans@olischlaeger.com
@@ -10,6 +12,9 @@ format:
 bibliography: references.bib
 ---
 
+
+::: {.callout-tip}
+
 ## Abstract
 
 Simulation-Based Inference (SBI) is an established method and line of methodological research.
@@ -18,22 +23,90 @@ In this talk I show some of my work on SBI and approach it by looking on a parti
 
 Thus, we will progress from a conceptual to a mathematical perspective and finally to an implementation. The challenges we face on this journey are twofold: solving a PDE reliably and fast to get good and enough training data, and data-efficient training of (generative) neural networks tasked with the inverse problem.
 
-
-## Simulation-based inference (SBI)
-
-::: {.notes}
-lorem ipsum
----
-define SBI
-add refs: cranmer
 :::
 
-^[@tejero-cantero2020sbi; @radev2020]
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020sbi; @radev2020]
+
+::: {.notes}
+So let's do a quick intro to SBI so we are all on the same page.
+
+I am not telling you anything new, when I say that simulations are nowadays central to the scientific method.
+You just can't get around writing highly complex code for testing your highly complex hypothesis.
+In fact, in some fields you could even say, that research *IS* the effort of improving simulators.
+Then, simulation code is a kind of concrete condensate of the scientific theories.
+
+Climate models are a good example for this - they are our best guesses
+of how each of the compartments ocean, atmosphere, land, ... work internally and also how they interact.
+
+But to build better simulators you obviously need to not only simulate them, but also evaluate them against observations.
+The most principled way to do this is by statistical inference.
+Now, simulation-based inference is concerned with making statistical inference tools that can keep up with the needs of such simulators.
+
+Traditional approaches to statistical inference need the likelihood of the simulator, but that typically not available.
+
+
+define SBI
+
+
+add refs: cranmer
+:::
+With *any* simulator you can:
+$$
+\theta \sim p(\theta)
+$$
+
+
+::: {.fragment .fade-in}
+$$
+x \sim p(x|\theta)
+$$
+✅ sample from the joint probability distribution
+$(\theta, x) \sim p(x, \theta)$
+<!-- = p(x|\theta) p(\theta)$ -->
+
+:::
+
+
+::: {.fragment .fade-in}
+❌ evaluate likelihood $p(x|\theta)$
+
+❌ evaluate or sample from posterior $p(\theta|x)$
+:::
+
+
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020sbi; @radev2020]  {visibility="uncounted" auto-animate=true}
+✅ sample from the joint probability distribution
+$(\theta, x) \sim p(x, \theta)$
+
+❌ evaluate likelihood $p(x|\theta)$
+
+❌ evaluate or sample from posterior $p(\theta|x)$
+
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020sbi; @radev2020]  {visibility="uncounted" auto-animate=true}
+✅ sample from the joint probability distribution
+$(\theta, x) \sim p(x, \theta)$
+
+❌evaluate likelihood $p(x|\theta)$
+
+✅ evaluate or sample from posterior $p(\theta|x)$
+
+
+
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020sbi; @radev2020]  {visibility="uncounted" auto-animate=true}
+✅ sample from the joint probability distribution
+$(\theta, x) \sim p(x, \theta)$
+
+✅ evaluate likelihood $p(x|\theta)$
+
+✅ evaluate or sample from posterior $p(\theta|x)$
+
+
+
 
 ## My research in SBI
 
 ::: {.fragment .semi-fade-out}
-* prior sensitivity analysis ^[ published; @elsemuller2024]
+* prior sensitivity analysis ^[ published; @elsemuller2024] ![](figures/climate_sensitivity_ridge_plot_1.5_2023_SSP2.png){width=25%}
 * ground truth for inverse kinematics benchmark ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]
 * point estimation
 :::
