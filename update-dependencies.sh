@@ -21,5 +21,5 @@ pip-compile --pip-args "--extra-index-url https://download.pytorch.org/whl/cpu"
 echo "Dependencies updated. Installing updated requirements..."
 pip-sync
 echo "ADDITIONALLY INSTALLING BAYESFLOW FROM dev BRANCH !!! even though bayesflow is not mentioned in pyproject.toml or requirements.txt"
-pip install git+https://github.com/bayesflow-org/bayesflow.git@dev
+pip install git+https://github.com/bayesflow-org/bayesflow.git@3f82ce1
 echo "Dependencies installed."

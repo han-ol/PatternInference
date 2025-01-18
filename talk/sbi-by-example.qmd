@@ -1,0 +1,51 @@
+---
+title: "Conditioning a complex stochastic spatial simulator on observations"
+author:
+  - name: "Hans Olischläger"
+    email: hans@olischlaeger.com
+    affiliation: Universität Heidelberg
+format:
+  revealjs:
+    slide-number: true
+bibliography: references.bib
+---
+
+## Abstract
+
+Simulation-Based Inference (SBI) is an established method and line of methodological research.
+
+In this talk I show some of my work on SBI and approach it by looking on a particular scientific application: solving the inverse problem of pattern formation, i.e. which model parameters are likely to have resulted in a given observed pattern.
+
+Thus, we will progress from a conceptual to a mathematical perspective and finally to an implementation. The challenges we face on this journey are twofold: solving a PDE reliably and fast to get good and enough training data, and data-efficient training of (generative) neural networks tasked with the inverse problem.
+
+
+## Simulation-based inference (SBI)
+
+::: {.notes}
+lorem ipsum
+---
+define SBI
+add refs: cranmer
+:::
+
+^[@tejero-cantero2020sbi; @radev2020]
+
+## My research in SBI
+
+::: {.fragment .semi-fade-out}
+* prior sensitivity analysis ^[ published; @elsemuller2024]
+* ground truth for inverse kinematics benchmark ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]
+* point estimation
+:::
+* pattern formation application
+
+
+## Simulator
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}}
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-many >}}
+
+# Any questions?
+
+# References
