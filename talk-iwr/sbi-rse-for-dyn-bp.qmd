@@ -1,0 +1,437 @@
+---
+title: "BayesFlow: Analysis of biophysical models"
+subtitle: "Pattern formation model meets observations"
+date: today
+author:
+  - name: "Hans Olischläger"
+    email: hans@olischlaeger.com
+    orcid: 0009-0002-1285-2959
+    affiliation: Universität Heidelberg
+title-slide-attributes:
+  data-notes:
+    "
+I'll share an application of generative modelling that has interested me for a while. I have been working on more general methods for the last two months, so this talk is mainly based on work of last year. <br>
+
+
+I am going to Regensburg to explain the basics of SBI at the DPG conference this week so I thought it would be nice to talk here as well. <br>
+
+
+So after motivating the need for parameter parameter estimation, I will explain the basic idea of simulation based inference and then turn to a concrete example.
+
+
+Goals for everyone:
+
+
+* have an idea of the perspective of bio modellers
+
+
+* know the rough workflow of SBI
+
+* for me: get stated with this
+
+    "
+format:
+  clean-revealjs:
+    slide-number: true
+    footer: "Hans Olischläger -- Bayesian workflow for analysis of biophysical models"
+bibliography: references.bib
+fig-align: "left"
+---
+
+
+<!-- ::: {.callout-tip} -->
+<!---->
+<!-- ## Abstract -->
+<!---->
+<!-- The description of experimental systems by complex spatial models, be it with (stochastic) partial differential equations, agent-based simulation or otherwise, -->
+<!-- is often the condensation of all the central scientific hypotheses regarding a particular object of study. -->
+<!---->
+<!-- I argue, that making progress in this kind of modelling is currently hindered by the lack of a tool that enables solving the following inverse problem: -->
+<!-- Given an observation, determine all the model configurations that are able to produce it. In other words, what is the posterior probability of all model configurations given some (set of) experimental data. -->
+<!---->
+<!-- Instead of just preaching that in theory a Bayesian treatment would be nice, I will then continue to present such a tool: amortized Bayesian inference (as implemented in the software package BayesFlow). -->
+<!-- I will give examples on the classical Gierer-Meinhardt pattern forming PDE and a biophysical model, the Min system, which is used by E. coli to control cell division. -->
+<!---->
+<!-- I will also take a step back to give a broader picture of the newly available statistical methods that support complex spatial modelling and their limitations. -->
+<!-- The aim is to provide some guidance on what you can and cannot infer from your state-of-the-art scientific simulator given observations, and how to do it. -->
+
+<!-- Keywords: simulation-based inference; pattern formation; inverse problem; Python; Julia -->
+
+<!-- Simulation-Based Inference (SBI) is an established method and line of methodological research. -->
+<!---->
+<!-- In this talk I show some of my work on SBI and approach it by looking on a particular scientific application: solving the inverse problem of pattern formation, i.e. which model parameters are likely to have resulted in a given observed pattern. -->
+<!---->
+<!-- Thus, we will progress from a conceptual to a mathematical perspective and finally to an implementation. The challenges we face on this journey are twofold: solving a PDE reliably and fast to get good and enough training data, and data-efficient training of (generative) neural networks tasked with the inverse problem. -->
+
+<!-- ::: -->
+
+
+# Systems Biology
+
+Systems biology is the computational and mathematical analysis and modeling of complex biological systems.
+
+::: {.fragment .fade-in}
+$\rightarrow$ the holy grail of ~~systems biology~~ science today is being able to realistically *simulate* systems.
+:::
+
+::: {.notes}
+Then, simulation code is a kind of concrete condensate of the scientific theories.
+
+
+But to build better simulators you obviously need to not only simulate them, but also evaluate them against observations.
+The most principled way to do this is by statistical inference.
+Now, simulation-based inference is concerned with making statistical inference tools that can keep up with the needs of such simulators.
+:::
+
+
+# You understood a system if you identify a process model that is *compatible* with observations.
+
+# Reaction networks
+
+![Figure 1: Reaction networks hypotheses from @frey2020.](figures/reaction-networks-frey-and-brauns.png){width=40%}
+
+::: {.notes}
+Biochemical interaction networks of three model systems for self-organised intracellular pattern formation.
+
+
+(a) The Min system of E. coli.
+
+
+(b) Cdc42 system of S. Cerevisiae.
+
+
+(c) PAR system of C. elegans
+:::
+
+## Challenges {.smaller}
+
+* What does compatible mean? Distance in observation space?
+* Observations may be compatible with multiple process models.
+
+<!-- ## Example: Pattern Formation (2) -->
+
+<!-- Observations can have classically difficult modalities. -->
+
+<!-- $\rightarrow$ Lack of *similarity* measure -->
+
+::: {.fragment .fade-in}
+**Example: Turing patterns**
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}}
+![Figure 2: Reaction network topologies for two nodes from @scholes2019.](figures/network-topologies-turing.png){width=40%}
+:::
+
+::: {.notes}
+Scholes: Exhaustive analysis of potential Turing pattern generating mechanisms for systems with two or three molecular species.
+:::
+
+
+# Simulation-based inference (SBI)
+
+<!-- @cranmer2020; @tejero-cantero2020sbi; @radev2020 -->
+
+::: {.notes}
+This talk will be advocating for a method that is applicable whenever you have simulations.
+
+I am not telling you anything new, when I say that simulations are nowadays central to the scientific method.
+You just can't get around writing highly complex code for testing your highly complex hypothesis.
+In fact, in some fields you could even say, that research *IS* the effort of improving simulators.
+Then, simulation code is a kind of concrete condensate of the scientific theories.
+
+Climate models are a good example for this - they are our best guesses
+of how each of the compartments ocean, atmosphere, land, ... work internally and also how they interact.
+
+But to build better simulators you obviously need to not only simulate them, but also evaluate them against observations.
+The most principled way to do this is by statistical inference.
+Now, simulation-based inference is concerned with making statistical inference tools that can keep up with the needs of such simulators.
+
+Traditional approaches to statistical inference need the likelihood of the simulator, but that typically not available.
+
+
+define SBI
+
+
+add refs: cranmer
+:::
+
+
+##
+With *any* black-box simulator $\mathcal S_\theta$ you can:
+$$
+\theta \sim p(\theta)
+$$
+
+::: {.fragment .fade-in}
+$$
+x \sim p(x|\theta)
+$$
+✅ sample from the joint probability distribution
+$(\theta, x) \sim p(x, \theta)$
+<!-- = p(x|\theta) p(\theta)$ -->
+
+:::
+
+
+::: {.fragment .fade-in}
+❌ evaluate likelihood $p(x|\theta)$
+
+❌ evaluate or sample from posterior $p(\theta|x)$
+:::
+
+::: {.notes}
+A simulator will in general have some parameters of interest theta and can generate corresponding data x
+
+So by saying these parameters and data are samples of a structured probability distribution, we can say:
+
+we sampled (theta, x) from the joint probability distribution.
+
+
+--
+
+What we cannot do is evaluate these distributions, and specifically not the most interesting one:
+
+the probability of some parameters given an observation, called the posterior.
+:::
+
+<!-- ## -->
+<!---->
+<!-- ✅ sample from the joint probability distribution -->
+<!-- $(\theta, x) \sim p(x, \theta)$ -->
+<!---->
+<!-- ❌ evaluate likelihood $p(x|\theta)$ -->
+<!---->
+<!-- ❌ evaluate or sample from posterior $p(\theta|x)$ -->
+<!---->
+<!-- ## -->
+<!---->
+<!-- ✅ sample from the joint probability distribution -->
+<!-- $(\theta, x) \sim p(x, \theta)$ -->
+<!---->
+<!-- ❌evaluate likelihood $p(x|\theta)$ -->
+<!---->
+<!-- ✅ evaluate or sample from posterior $p(\theta|x)$ -->
+<!---->
+::: {.notes}
+As you know we can train generative NNs from samples, for example with the NLL-loss.
+
+These models become approximations of the distribution that is implicitly defined by the samples.
+
+With score-matching, coupling flows, free-form-flows, consistency models, ... ? we can not only generate more samples from these distributions, but also evaluate the densities.
+:::
+
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020; @radev2020]  {visibility="uncounted" auto-animate=true}
+
+Parameterize distribution <span style="color:grey;font-size: 60%;">(e.g. coupling flow, score-matching, free-form-flow, consistency model, transformer, ...)
+
+optimize a *proper scoring rule*^[@gneiting2007], like log-score ($\equiv$ NLL $\rightarrow$ $D_{KL}$)
+
+✅ likelihood $p(x|\theta)$, posterior $p(\theta|x)$, evidence $p(x)$
+
+✅ functionals of all the above
+
+## Many different approaches
+![Overview by @cranmer2020](figures/sbi-schemes.png){width=70%}
+
+::: {.notes}
+many approaches. This is an overview slide from Cranmer et al. And this is also the paper I would recommend you to read first.
+
+We focus on approximating the full posterior distribution with a generate neural network.
+:::
+
+## Many different approaches {visibility="uncounted"}
+
+![Overview by @cranmer2020](figures/sbi-schemes-focus.png){width=70%}
+
+## Many different approaches {visibility="uncounted"}
+
+![Overview by @cranmer2020](figures/sbi-schemes-focus-zoom.png){width=70%}
+
+
+
+## Turing Patterns: Gierer-Meinhardt
+
+PDE describing the reaction and diffusion of two chemicals
+
+
+$$
+\tiny\begin{split}
+\partial_t u_1 =& \; a - b u_1 + \frac{u_1 ^2} {u_2 (1+c u_1^2)} &+ s \Delta u_1 \\
+\partial_t u_2 =& \; u_1 ^2 - u_2 &+ \delta s \Delta u_2 \\
+0 <& \; a,b,c,\delta
+\end{split}
+\normalsize
+$$
+
+spontaneous pattern formation from uniform noise
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}}
+
+::: {.notes}
+It is an example system showing diffusion driven (Turing) instability and consists of two chemicals that can react and have a different diffusion constant.
+
+Given an observation, determine all the model configurations that are able to produce it. In other words, what is the posterior probability $p(\theta|x_{obs})$ of all model configurations $\theta=(a, b, c, \delta)$ given some (set of) experimental data $x_{obs}$.
+:::
+
+## Prior
+::: {.notes}
+If we don't have any other information than the parameters are positive, the Bayesian way is to choose something uninformative, like a ...
+It turns out, that the Gierer-Meinhardt model only has this famous Turing instability for some parameters.
+So what I did instead is, I sample proposals from a uniform distribution and reject anything that is bound to produce just a homogeneous state.
+
+The prior is a distribution on a 4-dimensional support. But we can look at the marginal distributions and all pairwise relationships.
+:::
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-parameters-prior >}}
+
+
+## Simulator {.smaller}
+
+* randomly perturbed homogeneous initial conditions
+* periodic boundary conditions
+
+
+::: {.fragment .fade-in}
+* Solve the parameterized PDE until fixed point
+$$
+\tiny\begin{split}
+\partial_t u_1 =& a - b u_1 + \frac{u_1 ^2} {u_2 (1+c u_1^2)} &+ s \Delta u_1 \\
+\partial_t u_2 =& u_1 ^2 - u_2 &+ \delta s \Delta u_2
+\end{split}
+\normalsize
+$$
+
+:::
+
+::: {.fragment .fade-in}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}}
+:::
+
+<!-- {{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-many >}} -->
+
+::: {.notes}
+
+:::
+
+## Inference for observation A
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+
+
+## Inference for observation A {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+:::
+
+
+::: {.column width="60%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-inference >}}
+:::
+
+::::
+
+## Inference for observation A {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+:::
+
+
+::: {.column width="65%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-resim-spot-strip-mix >}}
+:::
+
+::::
+
+## Inference for observation B
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+
+## Inference for observation B {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+:::
+
+::: {.column width="60%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-inference-laby >}}
+:::
+
+::::
+
+## Inference for observation B {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+:::
+
+::: {.column width="65%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-resim-laby >}}
+:::
+
+::::
+
+
+## Diagnostics {.smaller}
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-recovery >}}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-cal >}}
+
+::: {.notes}
+In the upper plot each dot shows the ground truth parameter for some observation against the approximated posterior distribution.
+
+With the lower plots we can judge whether the uncertainty of the model is *calibrated*.
+A calibrated model is one where the empirical cumulative distribution function of the approximated posterior matches the quantile level of the true parameter.
+The most sensitive test is on the right and we can see that the lines for each of the four parameters are firmly inside these circular confidence bands.
+:::
+
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 14: "Joint" samples](figures/IK-training-dataset-standard.png){width=40%} -->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 15: Approximate conditioning with generative neural network](figures/IK-central-posterior.png){width=40%} -->
+<!---->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 16: Example of exact target conditional distribution ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]](figures/IK-central-posterior-exact.png){width=40%} -->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 16: Showcasing fast sampling for benchmarking ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]](figures/IK-animation.gif){width=40%} -->
+<!---->
+
+
+## Toolbox Development
+::::: {.columns}
+
+:::: {.column width="80%"}
+Science needs good toolboxes to apply the methods we develop.
+
+::: {.incremental}
+* convenient
+* flexible
+* diagnosable
+* trustworthy
+* well-documented
+:::
+::::
+
+:::::::::::: {.column width="20%"}
+<!-- ![](figures/sbi-logo.png) -->
+
+![](figures/bf-logo.png)
+::::
+
+:::::
+
+
+
+## Thanks for you attention!
+![](figures/group-pic.jpg){width=60%}
+
+# Any questions?
+
+# References

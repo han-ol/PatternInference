@@ -7,5 +7,5 @@
 **/.ipynb_checkpoints
 .CondaPkg
 .guild/
-sbi-by-example_files
+*_files
 *.html
