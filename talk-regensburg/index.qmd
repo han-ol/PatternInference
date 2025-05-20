@@ -1,5 +1,5 @@
 ---
-title: "BayesFlow: Analysis of biophysical models"
+title: "BayesFlow: Parameter estimation for biophysical models"
 subtitle: "Pattern formation model meets observations"
 date: today
 author:
@@ -11,7 +11,8 @@ title-slide-attributes:
   data-notes:
     "
 
-Hi, I am Hans. I am finishing my Masters in Heidelberg. Happy to be here today.
+Hi, I am Hans. I am finishing my Masters in Heidelberg. Very cool to be here today!
+
 
 This talk, I hope, will be interesting to anyone who models a complex system, maybe has some equations or even a simulator and wants to evaluate those statistically.
 
@@ -40,7 +41,7 @@ fig-align: "left"
 # Question
 
 ::: {.notes}
-Could you maybe show your hands if you‘d say yes to this question?
+predictive models = meant to predict observables
 
 Great!
 
@@ -58,7 +59,7 @@ a Software
 One answer to the question could be BayesFlow, and this is what I will show you today.
 :::
 
-Are you (interested in) building / proposing / contributing to predictive models?
+Do you use or build predictive models in your research?
 
 . . .
 
@@ -72,7 +73,7 @@ How do you choose the parameters? Evaluate fit?
 ![](figures/bf-logo.png)
 :::
 ::: {.column width="80%"}
-**BayesFlow**: Library for amortized Bayesian workflows using generative neural networks
+**BayesFlow**: Python library for amortized Bayesian workflows using generative neural networks
 :::
 
 ::::
@@ -141,6 +142,13 @@ Posterior
 
 ![Figure 1: Reaction networks hypotheses from @frey2020.](figures/reaction-network-frey-and-brauns.png){width=40%}
 
+::: {.notes}
+For such complex simulators the analytic posterior over parameters given an observation is intractable.
+
+Numeric techniques like MCMC fail because we cannot evaluate the likelihood density.
+
+Approximate techniques like ABC rejection sampling fail because we don't have a good distance in observation space.
+:::
 
 ::: {.incremental}
 * parameters $\theta$: reaction and diffusion rates, system size, ...
@@ -152,32 +160,6 @@ Posterior
 
 <!-- @cranmer2020; @tejero-cantero2020sbi; @radev2020 -->
 
-::: {.notes}
-This talk will be advocating for a method that is applicable whenever you have simulations.
-
-<!-- I am not telling you anything new, when I say that simulations are nowadays central to the scientific method. -->
-<!-- You just can't get around writing highly complex code for testing your highly complex hypothesis. -->
-<!-- In fact, in some fields you could even say, that research *IS* the effort of improving simulators. -->
-
-Then, simulation code is a kind of concrete condensate of the scientific theories we want to test.
-
-<!-- Climate models are a good example for this - they are our best guesses -->
-<!-- of how each of the compartments ocean, atmosphere, land, ... work internally and also how they interact. -->
-
-But to build better simulators you obviously need to not only simulate them, but also evaluate them against observations.
-The most principled way to do this is by statistical inference.
-Now, simulation-based inference is concerned with making statistical inference tools that can keep up with the needs of such simulators.
-
-Traditional approaches to statistical inference need the likelihood of the simulator, but that typically not available.
-
-define SBI
-
-
-add refs: cranmer
-:::
-
-
-##
 
 ::: {.notes}
 A simulator will in general have some parameters of interest theta and can generate corresponding data x
@@ -192,32 +174,6 @@ we sampled (theta, x) from the joint probability distribution.
 What we cannot do is evaluate these distributions, and specifically not the most interesting one:
 
 the probability of some parameters given an observation, called the posterior.
-:::
-
-<!-- ## -->
-<!---->
-<!-- ✅ sample from the joint probability distribution -->
-<!-- $(\theta, x) \sim p(x, \theta)$ -->
-<!---->
-<!-- ❌ evaluate likelihood $p(x|\theta)$ -->
-<!---->
-<!-- ❌ evaluate or sample from posterior $p(\theta|x)$ -->
-<!---->
-<!-- ## -->
-<!---->
-<!-- ✅ sample from the joint probability distribution -->
-<!-- $(\theta, x) \sim p(x, \theta)$ -->
-<!---->
-<!-- ❌evaluate likelihood $p(x|\theta)$ -->
-<!---->
-<!-- ✅ evaluate or sample from posterior $p(\theta|x)$ -->
-<!---->
-::: {.notes}
-As you know we can train generative NNs from samples, for example with the NLL-loss.
-
-These models become approximations of the distribution that is implicitly defined by the samples.
-
-With score-matching, coupling flows, free-form-flows, consistency models, ... ? we can not only generate more samples from these distributions, but also evaluate the densities.
 :::
 
 ## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020; @radev2020]  {visibility="uncounted" auto-animate=true}
@@ -415,26 +371,47 @@ The most sensitive test is on the right and we can see that the lines for each o
 <!---->
 
 
-## Thanks to my collaborators!
-::::: {.columns}
-:::: {.column width="75%"}
-especially the BayesFlow-Team
+## Thanks to my collaborators! {.smaller}
 
-& Computer Vision and Learning Group - IWR @ Uni Heidelberg
+::: {.notes}
+Thanks!
+
+I linked the BayesFlow and the presentation repository here on the right.
+
+I hope I catch some of you later to talk about applicability to your simulators and what you would need from such an inference toolbox.
+:::
+
+:::::: {.columns}
+::::: {.column width="75%"}
+the BayesFlow-Team (Paul Bürkner, Stefan Radev, many more)
+
+& Ullrich Köthe, Computer Vision and Learning Group -
+IWR @ Heidelberg
 
 ![](figures/group-pic.jpg){width=60%}
 
+<!-- ![](figures/Bluesky_Logo.svg.png){width=5%} [\@bayesflow.org](https://bsky.app/profile/bayesflow.org) -->
+
+:::: {.columns}
 
 
-::::
-:::: {.column width="25%"}
 
-Code here
-<!-- ![](figures/github-mark.png) -->
-![](figures/qr-code-pattern-repo.png)
-![](figures/qr-code-bf-repo.png)
+::: {.column width="5%"}
+![](figures/Bluesky_Logo.svg.png){width=100%}
+:::
+::: {.column width="20%"}
+[\@bayesflow.org](https://bsky.app/profile/bayesflow.org)
+:::
 ::::
 :::::
+::::: {.column width="25%"}
+
+All code here
+<!-- ![](figures/github-mark.png) -->
+![](figures/qr-code-bf-repo.png)
+![](figures/qr-code-pattern-repo.png)
+:::::
+::::::
 
 
 
