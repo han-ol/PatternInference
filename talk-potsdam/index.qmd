@@ -1,0 +1,479 @@
+---
+title: "Simulation-based Inference for Complex Biological Models"
+subtitle: "Pattern formation model meets observations"
+date: today
+author:
+  - name: "Hans Olischläger"
+    email: hans@olischlaeger.com
+    orcid: 0009-0002-1285-2959
+    affiliation: Universität Heidelberg
+title-slide-attributes:
+  data-notes:
+    "
+
+Hi, I am Hans. Thanks alot for inviting me to your group seminar today! Just quickly about who I am.
+I am finishing my Masters in Heidelberg now. We met at the DPG spring conference in Regensburg this year and thought it might be interesting to talk about parameter estimation in this seminar setting.
+
+
+So I have a background in physics and learnt some statistics and machine learning in the last years as well,
+but have always had an interest in dynamical, pattern forming systems.
+
+
+I plan on talking about the kind of statistical tools that I am working on, show a basic pattern forming PDE example and then hear about your thoughts.
+What interests you in terms of statistics for your models, and how maybe could research directions look like from your point of view.
+
+
+Statistics?
+
+
+So this talk, I hope, will be interesting to anyone who models a complex system, maybe has some equations or even a simulator
+and wants to evaluate those statistically.
+
+
+By that I mean, roughly speaking, if you simulate the model and it produces some observables, how well do these simulated observations match real world observations. And if you have parameters in your model, which parameters can produce what you observed in the real world?
+
+
+Put another way, which model parameters are compatible with observations.
+    "
+format:
+  clean-revealjs:
+    slide-number: true
+    footer: "Hans Olischläger -- Bayesian workflow for analysis of biophysical models"
+bibliography: references.bib
+fig-align: "left"
+---
+
+<!-- # Goals for everyone: -->
+<!-- # -->
+<!-- # -->
+<!-- # * understand basic Bayesian approach -->
+<!-- # -->
+<!-- # -->
+<!-- # * know the rough workflow of SBI -->
+<!-- # -->
+<!-- # -->
+<!-- # for me: how would you use SBI? What difficulties arise in your fields of expertise? -->
+
+## Predictive models?
+
+::: {.notes}
+I think in some shape or form most of you are studying predictive models.
+
+
+predictive models = meant to predict observables
+
+Great!
+
+I briefly looked into what some of you are working on and learnt you study Dictyostelium discoideum.
+
+
+In particular, I found the figure here on the right in one of your papers. Left side experimental, right side simulation
+
+
+How do you choose the parameters?
+How do evaluate model fit?
+
+Old problem with many approaches.
+Yes it can be really tricky, and for complex models especially.
+
+This is what the talk is about.
+
+BayesFlow...
+a Software
+
+One answer to the question could be BayesFlow, and this is what I will show you today.
+:::
+
+
+
+:::: {.columns}
+
+::: {.column width="30%"}
+![Cell motility of D. discoideum^[@driscoll2012]](figures/cell-shape-dynamics.gif)
+:::
+
+::: {.column width="30%" .fragment .fade-in}
+<!-- ![Concentration pattern in D. discoideum ^[Stoch. Reac.Diff.Sys. in BP: Towards a Toolbox for Quantitative Model Evaluation. Pasemann, Beta, Stannat, [arXiv.2307.06655](https://doi.org/10.48550/arXiv.2307.06655)]](figures/actin-marker-concentration.png) -->
+![Concentration pattern in D. discoideum ^[@pasemann2023]](figures/actin-marker-concentration.png)
+:::
+
+::::
+
+<!-- ## Todays topic: Simulation-based tools -->
+
+<!-- such as -->
+
+. . .
+
+:::: {.columns}
+
+::: {.column width="6%"}
+![](figures/bf-logo.png)
+:::
+::: {.column width="70%"}
+**BayesFlow**: Python library for amortized Bayesian workflows using generative neural networks
+:::
+
+::::
+
+
+
+<!-- # Notation -->
+<!---->
+<!-- observation $x$ -->
+<!---->
+<!-- parameter $\theta$ -->
+
+# Challenges
+
+::: {.notes}
+Why is it difficult to choose parameters rigorously? Many reasons, highlighting 2 that we will adress in this talk:
+* What does similar mean for observations? If observations are richer than one single number, the euclidian distance between observations quickly becomes useless.
+* Many models can explain the same observation, many observations can be produced by one model. How to deal with the uncertainty?
+:::
+
+::: {.incremental}
+* What are *similar observations?* <!-- Need good distance metric in observation space. -->
+* How to deal with *uncertainty*?
+  * One model: many possible observations
+  * One observation: many possible models
+* ...
+:::
+
+<!-- * *which one is it?* No one-to-one correspondence between observations and models. -->
+
+# Outline
+
+::: {.notes}
+In the rest of the talk, I will explain how to combine observations with complex simulators in a really uncertainty aware, rigorous way.
+
+But first, we will start with a toy example to introduce the names for things, and later we’ll solve the problem for a nonlinear PDE from biophysics.
+:::
+
+::: {.incremental}
+* combine model and observations the Bayesian way
+* simulation-based inference (SBI)
+* apply to nonlinear PDE from biophysics with BayesFlow
+:::
+
+# Bayesian statistics
+::: {.notes}
+Say you have a really simple model with a parameter.
+
+The system of interest is a coin, that might be biased. So we model it with a Bernoulli distribution.
+
+The Bernoulli distribution is the likelihood and will later become a complex simulator.
+
+Before we throw the coin and observe some data we are quite unsure. If we were to express our belief about the parameter as a probability distribution it would be broad. Like so:
+
+Prior
+Likelihood
+Posterior
+:::
+
+![](figures/coin_prior.png){width=40%}
+
+# Bayesian statistics
+![](figures/coin_updates.gif){width=40%}
+
+# More complex models
+
+![Figure 1: Reaction networks hypotheses from @frey2020.](figures/reaction-network-frey-and-brauns.png){width=40%}
+
+::: {.notes}
+For such complex simulators the analytic posterior over parameters given an observation is intractable.
+
+Numeric techniques like MCMC fail because we cannot evaluate the likelihood density.
+
+Approximate techniques like ABC rejection sampling fail because we don't have a good distance in observation space.
+:::
+
+::: {.incremental}
+* parameters $\theta$: reaction and diffusion rates, system size, ...
+* likelihood $p(x|\theta)$: ODE, PDE, SDE, agent-based, ...
+* observation $x$: concentration time series, cell positions, images, videos, ...
+:::
+
+# Simulation-based inference (SBI)
+
+<!-- @cranmer2020; @tejero-cantero2020sbi; @radev2020 -->
+
+
+::: {.notes}
+A simulator will in general have some parameters of interest theta and can generate corresponding data x
+
+So by saying these parameters and data are samples of a structured probability distribution, we can say:
+
+we sampled (theta, x) from the joint probability distribution.
+
+
+--
+
+What we cannot do is evaluate these distributions, and specifically not the most interesting one:
+
+the probability of some parameters given an observation, called the posterior.
+:::
+
+## Simulation-based inference (SBI) ^[@cranmer2020; @tejero-cantero2020; @radev2020]  {visibility="uncounted" auto-animate=true}
+
+Parameterize...
+
+* the conditional distribution
+  <br><span style="color:grey;font-size: 50%;">(e.g. Coupling Flow, Score-Matching, Free-Form-Flow, Consistency Model, Transformer, ...)
+* compression of observations like time series, sets, images...
+  <br><span style="color:grey;font-size: 50%;">(e.g. Transformer, DeepSets, Convolutional NN, ...)
+
+. . .
+
+and fit on many simulations
+
+* to optimize a *proper scoring rule*^[@gneiting2007], like log-score ($\equiv$ NLL $\rightarrow$ $D_{KL}$).
+
+<!-- ✅ likelihood $p(x|\theta)$, posterior $p(\theta|x)$, evidence $p(x)$ -->
+
+## BayesFlow
+
+![<https://github.com/bayesflow-org/bayesflow>](figures/bayesflow_landing_light.jpg)
+
+## Turing Patterns: Gierer-Meinhardt
+
+spontaneous pattern formation from uniform noise
+
+:::: {.columns}
+
+::: {.column width="40%"}
+PDE for reaction and diffusion of two chemicals
+$$
+\tiny
+\begin{split}
+\partial_t u_1 =& \; a - b u_1 + \frac{u_1 ^2} {u_2 (1+c u_1^2)} &+ s \Delta u_1 \\
+\partial_t u_2 =& \; u_1 ^2 - u_2 &+ \delta s \Delta u_2 \\
+0 <& \; a,b,c,\delta
+\end{split}
+\normalsize$$
+:::
+
+::: {.column width="55%"}
+![GPU parallelized simulation for 16 different $b$ values](figures/anim_fps15-vary-b.gif)
+:::
+
+::::
+
+<!-- {{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}} -->
+
+::: {.notes}
+It is an example system showing diffusion driven (Turing) instability and consists of two chemicals that can react and have a different diffusion constant.
+
+Given an observation, determine all the model configurations that are able to produce it. In other words, what is the posterior probability $p(\theta|x_{obs})$ of all model configurations $\theta=(a, b, c, \delta)$ given some (set of) experimental data $x_{obs}$.
+:::
+
+## Prior
+::: {.notes}
+If we don't have any other information than the parameters are positive, the Bayesian way is to choose something uninformative, like a ...
+It turns out, that the Gierer-Meinhardt model only has this famous Turing instability for some parameters.
+So what I did instead is, I sample proposals from a uniform distribution and reject anything that is bound to produce just a homogeneous state.
+
+The prior is a distribution on a 4-dimensional support. But we can look at the marginal distributions and all pairwise relationships.
+:::
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-parameters-prior >}}
+
+
+## Simulator {.smaller}
+
+* randomly perturbed homogeneous initial conditions
+* periodic boundary conditions
+
+
+::: {.fragment .fade-in}
+* Solve the parameterized PDE until fixed point
+$$
+\tiny\begin{split}
+\partial_t u_1 =& a - b u_1 + \frac{u_1 ^2} {u_2 (1+c u_1^2)} &+ s \Delta u_1 \\
+\partial_t u_2 =& u_1 ^2 - u_2 &+ \delta s \Delta u_2
+\end{split}
+\normalsize
+$$
+
+:::
+
+::: {.fragment .fade-in}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-few >}}
+:::
+
+<!-- {{< embed ../notebooks/computations-for-talk.ipynb#fig-patterns-prior-predictive-many >}} -->
+
+
+::: {.fragment .fade-in}
+Use tuples $(\theta, x) = (a, b, c, \delta, u_1)$ as training data in BayesFlow to fit a posterior approximation.
+:::
+
+. . .
+
+Trained ✅
+
+::: {.notes}
+
+:::
+
+## Inference for observation A
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+
+
+## Inference for observation A {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+:::
+
+
+::: {.column width="60%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-inference >}}
+:::
+
+::::
+
+## Inference for observation A {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-spot-strip-mix >}}
+:::
+
+
+::: {.column width="65%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-resim-spot-strip-mix >}}
+:::
+
+::::
+
+## Inference for observation B
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+
+## Inference for observation B {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+:::
+
+::: {.column width="60%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-inference-laby >}}
+:::
+
+::::
+
+## Inference for observation B {visibility="uncounted"}
+:::: {.columns}
+
+::: {.column width="24%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-obs-laby >}}
+:::
+
+::: {.column width="65%"}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-resim-laby >}}
+:::
+
+::::
+
+
+## Diagnostics {.smaller}
+
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-recovery >}}
+{{< embed ../notebooks/computations-for-talk.ipynb#fig-cal >}}
+
+::: {.notes}
+In the upper plot each dot shows the ground truth parameter for some observation against the approximated posterior distribution.
+
+With the lower plots we can judge whether the uncertainty of the model is *calibrated*.
+A calibrated model is one where the empirical cumulative distribution function of the approximated posterior matches the quantile level of the true parameter.
+The most sensitive test is on the right and we can see that the lines for each of the four parameters are firmly inside these circular confidence bands.
+:::
+
+
+## SBI has these requirements
+
+* simulations $x|\theta$ are available/obtainable
+* experimental observations are in-distribution of simulator
+
+. . .
+
+if applicable it can deliver
+
+* rigorous estimation of parameter uncertainty
+* arbitrarily complex posterior shapes (many modes, long tails, ...)
+* anything between 1 and 30 parameters (but potentially >100)
+
+## Also noteworthy
+
+* once trained, inference is really fast <br><span style="color:grey;font-size: 80%;">  ("amortized inference")
+* model misspecification detection <br><span style="color:grey;font-size: 80%;">  (use learnt distance in "summary space")
+* prior sensitivity <br><span style="color:grey;font-size: 80%;">  (jointly train posteriors for multiple priors)
+
+
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 14: "Joint" samples](figures/IK-training-dataset-standard.png){width=40%} -->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 15: Approximate conditioning with generative neural network](figures/IK-central-posterior.png){width=40%} -->
+<!---->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 16: Example of exact target conditional distribution ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]](figures/IK-central-posterior-exact.png){width=40%} -->
+<!---->
+<!-- ## Inverse kinematics -->
+<!-- ![Figure 16: Showcasing fast sampling for benchmarking ^[code on <https://codeberg.org/han-ol/InverseKinematicsSBI>]](figures/IK-animation.gif){width=40%} -->
+<!---->
+
+
+## Thanks to my collaborators! {.smaller}
+
+::: {.notes}
+Thanks!
+
+I linked the BayesFlow and the presentation repository here on the right.
+
+I hope I catch some of you later to talk about applicability to your simulators and what you would need from such an inference toolbox.
+:::
+
+:::::: {.columns}
+::::: {.column width="75%"}
+the BayesFlow-Team (Paul Bürkner, Stefan Radev, many more)
+
+& Ullrich Köthe, Computer Vision and Learning Group -
+IWR @ Heidelberg
+
+![](figures/group-pic.jpg){width=60%}
+
+<!-- ![](figures/Bluesky_Logo.svg.png){width=5%} [\@bayesflow.org](https://bsky.app/profile/bayesflow.org) -->
+
+:::: {.columns}
+
+
+
+::: {.column width="5%"}
+![](figures/Bluesky_Logo.svg.png){width=100%}
+:::
+::: {.column width="20%"}
+[\@bayesflow.org](https://bsky.app/profile/bayesflow.org)
+:::
+::::
+:::::
+::::: {.column width="25%"}
+
+All code here
+<!-- ![](figures/github-mark.png) -->
+![](figures/qr-code-bf-repo.png)
+![](figures/qr-code-pattern-repo.png)
+:::::
+::::::
+
+
+
+# Any questions?
+
+# References

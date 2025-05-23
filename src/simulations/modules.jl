@@ -69,6 +69,97 @@ end  # end of module GiererMeinhardt ##
 
 #######################################
 
+module MinSystem
+export kernel!, initialize_problem
+
+using LinearAlgebra
+using DifferentialEquations
+using BenchmarkTools
+
+function create_MxMy_periodic_bc_laplacian(domain_size)
+    Mx = Matrix(
+        Tridiagonal([1.0 for i in 1:(domain_size - 1)], [-2.0 for i in 1:domain_size],
+        [1.0 for i in 1:(domain_size - 1)])
+    )
+    Mx[end, 1] = 1.0
+    Mx[1, end] = 1.0
+
+    My = copy(transpose(Mx))
+
+    return Mx, My
+end
+
+function laplacian!(du, u, D, Mx, My)
+    mul!(du, Mx, u, D, 1)
+    mul!(du, u, My, D, 1)
+end
+
+function kernel!(du, u, p, t)
+    parameters, Mx, My = p
+    D_D, D_E, D_d, k_D, k_dD, k_dEr, k_dEl, k_de, λ, μ, ρ_D, ρ_E, L = parameters
+
+    du .= 0
+
+    # in document left to right, top to bottom
+    c_DD = @view u[1, :, :]
+    dc_DD = @view du[1, :, :]
+
+    c_Er = @view u[2, :, :]
+    dc_Er = @view du[2, :, :]
+
+    c_DT = @view u[3, :, :]
+    dc_DT = @view du[3, :, :]
+
+    c_El = @view u[4, :, :]
+    dc_El = @view du[4, :, :]
+
+    m_d = @view u[5, :, :]
+    dm_d = @view du[5, :, :]
+
+    m_de = @view u[6, :, :]
+    dm_de = @view du[6, :, :]
+
+    # add diffusion gradient
+    laplacian!(dc_DD, c_DD, D_D, Mx, My)
+    laplacian!(dc_Er, c_Er, D_E, Mx, My)
+    laplacian!(dc_DT, c_DT, D_D, Mx, My)
+    laplacian!(dc_El, c_El, D_E, Mx, My)
+    laplacian!(dm_d, m_d, D_d, Mx, My)
+    laplacian!(dm_de, m_de, D_d, Mx, My)
+
+    # add reaction gradient
+    @. dc_DD += k_de * m_de - λ * c_DD
+    @. dc_Er += -k_dEr * c_Er * m_d + k_de * m_de - μ * c_Er
+    @. dc_DT += -(k_D + k_dD * m_d) * c_DT + λ * c_DD
+    @. dc_El += -k_dEl * c_El * m_d + μ * c_Er
+    @. dm_d += (k_D + k_dD * m_d) * c_DT - (k_dEr * c_Er + k_dEl * c_El) * m_d
+    @. dm_de += (k_dEr * c_Er + k_dEl * c_El) * m_d - k_de * m_de
+end
+
+function benchmark_kernel(parameters, initial_conditions)
+    domain_size = size(initial_conditions, 1)
+    Mx, My = create_MxMy_periodic_bc_laplacian(domain_size)
+    p = (parameters, Mx, My)
+    u = copy(initial_conditions)
+    du = copy(initial_conditions)
+    du .= 0
+    @btime kernel!($du, $u, $p, 0)
+end
+
+function initialize_problem(parameters, initial_conditions, tspan)
+    # println("GiererMeinhardt.kernel! benchmark:")
+    # benchmark_kernel(parameters, initial_conditions)  # -> 0 allocations !
+    domain_size = size(initial_conditions, 1)
+    Mx, My = create_MxMy_periodic_bc_laplacian(domain_size)
+    p = (parameters, Mx, My)
+    prob = ODEProblem(kernel!, initial_conditions, tspan, p)
+end
+
+end  # end of module MinSystem ########
+#######################################
+
+#######################################
+
 module Samplers
 
 export wide_prior_sampler, uniform_initial_condition_sampler,

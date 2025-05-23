@@ -13,6 +13,7 @@ batch_size = 32
 training_budget = 16384  # 2^14
 R_max = 32
 B = 6
+ptp_cutoff = 0.3
 # adapter = get_adapter()
 adapter = (
     bf.adapters.Adapter()
@@ -25,7 +26,9 @@ adapter = (
     # .standardize(include="inference_variables", momentum=None, axis=0)
     .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
 )
-train_dict, val_dict, _ = make_data_dicts_from_pickled_data(training_budget=training_budget, R_max=R_max, B=B)
+train_dict, val_dict, _ = make_data_dicts_from_pickled_data(
+    training_budget=training_budget, R_max=R_max, B=B, ptp_cutoff=ptp_cutoff
+)
 training_dataset = bf.datasets.OfflineDataset(data=train_dict, batch_size=batch_size, adapter=adapter)
 validation_dataset = bf.datasets.OfflineDataset(data=val_dict, batch_size=batch_size, adapter=adapter)
 print(training_dataset)

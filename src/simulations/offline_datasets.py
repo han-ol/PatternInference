@@ -80,8 +80,15 @@ def get_expert_rdh(slice_path, R_max, B, budget=None):
     return hist_dict
 
 
+def ptp_mask(sim_dict, ptp_cutoff):
+    pattern_key = "final_states"
+    pattern_ptp = np.ptp(sim_dict[pattern_key], axis=(1, 2))
+    mask = pattern_ptp > ptp_cutoff
+    return {key: value[mask] for key, value in sim_dict.items()}
+
+
 def make_data_dicts_from_pickled_data(
-    data_path="/home/ho/code/PatternInference/data/", training_budget=None, R_max=None, B=None
+    data_path="/home/ho/code/PatternInference/data/", training_budget=None, R_max=None, B=None, ptp_cutoff=0.0
 ):
     sims_path_train = os.path.join(data_path, "GM-001-slice-04000-20384-train.pkl")
     with open(sims_path_train, "rb") as f:
@@ -89,8 +96,9 @@ def make_data_dicts_from_pickled_data(
         train_dict["parameters"] = train_dict["parameters"][:, :4]
         train_dict |= get_individual_sim_data_std(train_dict)
         if not (R_max == B == None):
-            train_dict |= get_expert_rdh(sims_path_train, R_max=R_max, B=B, budget=training_budget)
+            train_dict |= get_expert_rdh(sims_path_train, R_max=R_max, B=B)
 
+        train_dict = ptp_mask(train_dict, ptp_cutoff)
         train_dict = {key: value[:training_budget, ...] for key, value in train_dict.items()}
 
     sims_path_val = os.path.join(data_path, "GM-001-slice-00000-02000-validation.pkl")
@@ -100,6 +108,8 @@ def make_data_dicts_from_pickled_data(
         val_dict |= get_individual_sim_data_std(val_dict)
         if not (R_max == B == None):
             val_dict |= get_expert_rdh(sims_path_val, R_max=R_max, B=B)
+
+        val_dict = ptp_mask(val_dict, ptp_cutoff)
 
     for new_data_dict in (train_dict, val_dict):
         for key, value in new_data_dict.items():
