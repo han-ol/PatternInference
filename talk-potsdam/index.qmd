@@ -1,5 +1,5 @@
 ---
-title: "BayesFlow: Parameter estimation for biophysical models"
+title: "Simulation-based Inference for Complex Biological Models"
 subtitle: "Pattern formation model meets observations"
 date: today
 author:
@@ -11,13 +11,29 @@ title-slide-attributes:
   data-notes:
     "
 
-Hi, I am Hans. I am finishing my Masters in Heidelberg. Very cool to be here today!
+Hi, I am Hans. Thanks alot for inviting me to your group seminar today! Just quickly about who I am.
+I am finishing my Masters in Heidelberg now. We met at the DPG spring conference in Regensburg this year and thought it might be interesting to talk about parameter estimation in this seminar setting.
 
 
-This talk, I hope, will be interesting to anyone who models a complex system, maybe has some equations or even a simulator and wants to evaluate those statistically.
+So I have a background in physics and learnt some statistics and machine learning in the last years as well,
+but have always had an interest in dynamical, pattern forming systems.
+
+
+I plan on talking about the kind of statistical tools that I am working on, show a basic pattern forming PDE example and then hear about your thoughts.
+What interests you in terms of statistics for your models, and how maybe could research directions look like from your point of view.
+
+
+Statistics?
+
+
+So this talk, I hope, will be interesting to anyone who models a complex system, maybe has some equations or even a simulator
+and wants to evaluate those statistically.
+
 
 By that I mean, roughly speaking, if you simulate the model and it produces some observables, how well do these simulated observations match real world observations. And if you have parameters in your model, which parameters can produce what you observed in the real world?
 
+
+Put another way, which model parameters are compatible with observations.
     "
 format:
   clean-revealjs:
@@ -38,12 +54,21 @@ fig-align: "left"
 <!-- # -->
 <!-- # for me: how would you use SBI? What difficulties arise in your fields of expertise? -->
 
-# Question
+## Predictive models?
 
 ::: {.notes}
+I think in some shape or form most of you are studying predictive models.
+
+
 predictive models = meant to predict observables
 
 Great!
+
+I briefly looked into what some of you are working on and learnt you study Dictyostelium discoideum.
+
+
+In particular, I found the figure here on the right in one of your papers. Left side experimental, right side simulation
+
 
 How do you choose the parameters?
 How do evaluate model fit?
@@ -59,20 +84,33 @@ a Software
 One answer to the question could be BayesFlow, and this is what I will show you today.
 :::
 
-Do you use or build predictive models in your research?
 
-. . .
 
-How do you choose the parameters? Evaluate fit?
+:::: {.columns}
+
+::: {.column width="30%"}
+![Cell motility of D. discoideum^[@driscoll2012]](figures/cell-shape-dynamics.gif)
+:::
+
+::: {.column width="30%" .fragment .fade-in}
+<!-- ![Concentration pattern in D. discoideum ^[Stoch. Reac.Diff.Sys. in BP: Towards a Toolbox for Quantitative Model Evaluation. Pasemann, Beta, Stannat, [arXiv.2307.06655](https://doi.org/10.48550/arXiv.2307.06655)]](figures/actin-marker-concentration.png) -->
+![Concentration pattern in D. discoideum ^[@pasemann2023]](figures/actin-marker-concentration.png)
+:::
+
+::::
+
+<!-- ## Todays topic: Simulation-based tools -->
+
+<!-- such as -->
 
 . . .
 
 :::: {.columns}
 
-::: {.column width="10%"}
+::: {.column width="6%"}
 ![](figures/bf-logo.png)
 :::
-::: {.column width="80%"}
+::: {.column width="70%"}
 **BayesFlow**: Python library for amortized Bayesian workflows using generative neural networks
 :::
 
@@ -354,6 +392,27 @@ With the lower plots we can judge whether the uncertainty of the model is *calib
 A calibrated model is one where the empirical cumulative distribution function of the approximated posterior matches the quantile level of the true parameter.
 The most sensitive test is on the right and we can see that the lines for each of the four parameters are firmly inside these circular confidence bands.
 :::
+
+
+## SBI has these requirements
+
+* simulations $x|\theta$ are available/obtainable
+* experimental observations are in-distribution of simulator
+
+. . .
+
+if applicable it can deliver
+
+* rigorous estimation of parameter uncertainty
+* arbitrarily complex posterior shapes (many modes, long tails, ...)
+* anything between 1 and 30 parameters (but potentially >100)
+
+## Also noteworthy
+
+* once trained, inference is really fast <br><span style="color:grey;font-size: 80%;">  ("amortized inference")
+* model misspecification detection <br><span style="color:grey;font-size: 80%;">  (use learnt distance in "summary space")
+* prior sensitivity <br><span style="color:grey;font-size: 80%;">  (jointly train posteriors for multiple priors)
+
 
 <!---->
 <!-- ## Inverse kinematics -->
