@@ -30,7 +30,11 @@ kernel_size_list = [3, 3]
 pool_size_list = [2, None]
 assert len(num_filters_list) == len(kernel_size_list) == len(pool_size_list)
 conv_params = [
-    dict(num_filters=num_filters_list[i], kernel_size=kernel_size_list[i], pool_size=pool_size_list[i])
+    dict(
+        num_filters=num_filters_list[i],
+        kernel_size=kernel_size_list[i],
+        pool_size=pool_size_list[i],
+    )
     for i in range(len(num_filters_list))
 ]
 
@@ -56,7 +60,9 @@ approximator = bf.approximators.ContinuousApproximator(
 
 initial_learning_rate = 5e-4
 scheduled_lr = keras.optimizers.schedules.CosineDecay(
-    initial_learning_rate=initial_learning_rate, decay_steps=epochs * training_dataset.num_batches, alpha=1e-8
+    initial_learning_rate=initial_learning_rate,
+    decay_steps=epochs * training_dataset.num_batches,
+    alpha=1e-8,
 )
 optimizer = keras.optimizers.AdamW(learning_rate=scheduled_lr, clipnorm=1.0)
 metrics = [
@@ -70,7 +76,11 @@ variable_names = np.array(["$a$", "$b$", "$c$", r"$\delta$"])
 callbacks = [
     keras.callbacks.TerminateOnNaN(),
     PlotDiagnostics(
-        "diagnostics", val_dict=val_dict, num_diag_obs=200, num_diag_samples=500, variable_names=variable_names
+        "diagnostics",
+        val_dict=val_dict,
+        num_diag_obs=200,
+        num_diag_samples=500,
+        variable_names=variable_names,
     ),
 ]
 

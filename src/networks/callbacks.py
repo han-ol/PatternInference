@@ -5,7 +5,15 @@ import keras
 
 
 class PlotDiagnostics(keras.callbacks.Callback):
-    def __init__(self, name, val_dict, num_diag_obs, num_diag_samples, variable_names, figure_dir="figures"):
+    def __init__(
+        self,
+        name,
+        val_dict,
+        num_diag_obs,
+        num_diag_samples,
+        variable_names,
+        figure_dir="figures",
+    ):
         self.name = name
         self.val_dict = val_dict
         self.num_diag_obs = num_diag_obs

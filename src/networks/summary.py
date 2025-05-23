@@ -51,7 +51,10 @@ class CNN(bf.networks.SummaryNetwork):
 
             self.net.add(
                 keras.layers.Conv2D(
-                    num_filters, kernel_size, activation=activation, kernel_regularizer=kernel_regularizer
+                    num_filters,
+                    kernel_size,
+                    activation=activation,
+                    kernel_regularizer=kernel_regularizer,
                 )
             )
 
@@ -64,7 +67,13 @@ class CNN(bf.networks.SummaryNetwork):
         self.net.add(keras.layers.Flatten())
         if dense_dropout_prob > 0:
             self.net.add(keras.layers.Dropout(dense_dropout_prob))
-        self.net.add(keras.layers.Dense(num_fully_connected, activation="relu", kernel_regularizer=kernel_regularizer))
+        self.net.add(
+            keras.layers.Dense(
+                num_fully_connected,
+                activation="relu",
+                kernel_regularizer=kernel_regularizer,
+            )
+        )
         self.net.add(keras.layers.Dense(summary_dim, kernel_regularizer=kernel_regularizer))
 
     def call(self, inputs, training: bool = False, **kwargs):

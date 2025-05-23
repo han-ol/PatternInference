@@ -42,7 +42,9 @@ approximator = bf.approximators.ContinuousApproximator(inference_network=inferen
 
 initial_learning_rate = 5e-4
 scheduled_lr = keras.optimizers.schedules.CosineDecay(
-    initial_learning_rate=initial_learning_rate, decay_steps=epochs * training_dataset.num_batches, alpha=1e-8
+    initial_learning_rate=initial_learning_rate,
+    decay_steps=epochs * training_dataset.num_batches,
+    alpha=1e-8,
 )
 optimizer = keras.optimizers.AdamW(learning_rate=scheduled_lr, clipnorm=1.0)
 metrics = [
@@ -56,7 +58,11 @@ variable_names = np.array(["$a$", "$b$", "$c$", r"$\delta$"])
 callbacks = [
     keras.callbacks.TerminateOnNaN(),
     PlotDiagnostics(
-        "diagnostics", val_dict=val_dict, num_diag_obs=200, num_diag_samples=500, variable_names=variable_names
+        "diagnostics",
+        val_dict=val_dict,
+        num_diag_obs=200,
+        num_diag_samples=500,
+        variable_names=variable_names,
     ),
 ]
 

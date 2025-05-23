@@ -88,7 +88,11 @@ def ptp_mask(sim_dict, ptp_cutoff):
 
 
 def make_data_dicts_from_pickled_data(
-    data_path="/home/ho/code/PatternInference/data/", training_budget=None, R_max=None, B=None, ptp_cutoff=0.0
+    data_path="/home/ho/code/PatternInference/data/",
+    training_budget=None,
+    R_max=None,
+    B=None,
+    ptp_cutoff=0.0,
 ):
     sims_path_train = os.path.join(data_path, "GM-001-slice-04000-20384-train.pkl")
     with open(sims_path_train, "rb") as f:
