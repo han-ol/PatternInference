@@ -1,31 +1,30 @@
-print("\n", 5 * "-", "TRAINING CONCAT HYBRID LEARNER", 5 * "-")
-
 import bayesflow as bf
 import keras
 import numpy as np
 
 from src.networks import CNN, PlotDiagnostics
-from src.simulations import get_adapter, get_expert_simulator, get_pattern_simulator, make_data_dicts_from_pickled_data
+from src.simulations import get_adapter, get_pattern_simulator, make_data_dicts_from_pickled_data
+
+condition_type = "concat_hybrid"
+
+print("\n", 5 * "-", f"TRAINING {condition_type.upper()} LEARNER", 5 * "-")
+
+assert condition_type in ["concat_hybrid", "pure_learner", "pure_expert"]
+has_summary_net = condition_type in ["concat_hybrid", "pure_learner"]
 
 simulator = get_pattern_simulator()
 
+seed = 1234
+keras.utils.set_random_seed(seed)
+
+epochs = 15
 batch_size = 32
 training_budget = 16384  # 2^14
 R_max = 32
 B = 6
 ptp_cutoff = 0.3
 # adapter = get_adapter()
-adapter = (
-    bf.adapters.Adapter()
-    .convert_dtype("float64", "float32")
-    .keep(["parameters", "final_states_std", "expert_rdhs"])
-    .constrain("parameters", lower=0)
-    .rename("parameters", "inference_variables")
-    .rename("final_states_std", "summary_variables")
-    .rename("expert_rdhs", "inference_conditions")
-    # .standardize(include="inference_variables", momentum=None, axis=0)
-    .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
-)
+adapter = get_adapter(condition_type)
 train_dict, val_dict, _ = make_data_dicts_from_pickled_data(
     training_budget=training_budget, R_max=R_max, B=B, ptp_cutoff=ptp_cutoff
 )
@@ -53,21 +52,30 @@ conv_params = [
     for i in range(len(num_filters_list))
 ]
 
-
 summary_dim = 6
 summary_net_dropout = inference_net_dropout = 0.0
-summary_net = CNN(
-    summary_dim=summary_dim,
-    conv_params=conv_params,
-    num_fully_connected=15,
-    conv_dropout_prob=summary_net_dropout,
-    dense_dropout_prob=summary_net_dropout,
-    kernel_regularizer="l1l2",
-)
-print(summary_net)
+if has_summary_net:
+    summary_net = CNN(
+        summary_dim=summary_dim,
+        conv_params=conv_params,
+        num_fully_connected=15,
+        conv_dropout_prob=summary_net_dropout,
+        dense_dropout_prob=summary_net_dropout,
+        kernel_regularizer="l1l2",
+    )
+else:
+    summary_net = None
 
 fm_residual = True
-inference_net = bf.networks.FlowMatching(subnet_kwargs={"residual": True, "dropout": inference_net_dropout})
+inference_network_name = "cf"
+match inference_network_name:
+    case "cf":
+        inference_net = bf.networks.CouplingFlow(subnet_kwargs={"dropout": inference_net_dropout})
+    case "fm":
+        inference_net = bf.networks.FlowMatching(
+            subnet_kwargs={"residual": fm_residual, "dropout": inference_net_dropout}
+        )
+
 
 approximator = bf.approximators.ContinuousApproximator(
     inference_network=inference_net, summary_network=summary_net, adapter=adapter
@@ -99,7 +107,6 @@ callbacks = [
     ),
 ]
 
-epochs = 15
 history = approximator.fit(
     epochs=epochs,
     dataset=training_dataset,

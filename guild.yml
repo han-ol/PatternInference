@@ -37,3 +37,20 @@
       output-scalars:
         - step: 'Epoch (\step)'
         - '- (\key): (\value)'
+
+    train-001:
+      main: src.train.gm_001
+      flags-dest: globals
+      flags-import: all
+      output-scalars:
+        - step: 'Epoch (\step)'
+        - '- (\key): (\value)'
+
+# unfinished pipeline operation
+    # train-both-pure-and-concat:
+    #     summary_dim: null
+    #     seed: null
+    #   steps:
+    #     - train-mvn-model epochs=${epochs} num_batches_per_epoch=${num_batches_per_epoch} repetitions=${repetitions} dim=${dim} N=${N} batch_size=${batch_size} summary_dim=${summary_dim}  prior_sigma_fixed=${prior_sigma_fixed} prior_sigma_a0=${prior_sigma_a0} prior_sigma_b0=${prior_sigma_b0} likelihood_x_mean=${likelihood_x_mean} likelihood_x_std=${likelihood_x_std} seed=${seed}
+    #     - train-cf-model  epochs=${epochs} num_batches_per_epoch=${num_batches_per_epoch} repetitions=${repetitions} dim=${dim} N=${N} batch_size=${batch_size} summary_dim=${summary_dim}  prior_sigma_fixed=${prior_sigma_fixed} prior_sigma_a0=${prior_sigma_a0} prior_sigma_b0=${prior_sigma_b0} likelihood_x_mean=${likelihood_x_mean} likelihood_x_std=${likelihood_x_std} seed=${seed}
+    #     - train-fm-model  epochs=${epochs} num_batches_per_epoch=${num_batches_per_epoch} repetitions=${repetitions} dim=${dim} N=${N} batch_size=${batch_size} summary_dim=${summary_dim}  prior_sigma_fixed=${prior_sigma_fixed} prior_sigma_a0=${prior_sigma_a0} prior_sigma_b0=${prior_sigma_b0} likelihood_x_mean=${likelihood_x_mean} likelihood_x_std=${likelihood_x_std} seed=${seed}
