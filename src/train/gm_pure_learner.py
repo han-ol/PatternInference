@@ -1,5 +1,3 @@
-print("\n", 5 * "-", "TRAINING PURE LEARNER", 5 * "-")
-
 import bayesflow as bf
 import keras
 import numpy as np
@@ -7,12 +5,17 @@ import numpy as np
 from src.networks import CNN, PlotDiagnostics
 from src.simulations import get_adapter, get_pattern_simulator, make_data_dicts_from_pickled_data
 
+print("\n", 5 * "-", "TRAINING PURE LEARNER", 5 * "-")
+
+condition_type = "pure_learner"
+
 simulator = get_pattern_simulator()
 
+epochs = 15
 batch_size = 32
 training_budget = 16384  # 2^14
 ptp_cutoff = 0.3
-adapter = get_adapter()
+adapter = get_adapter(condition_type)
 train_dict, val_dict, _ = make_data_dicts_from_pickled_data(training_budget=training_budget, ptp_cutoff=ptp_cutoff)
 training_dataset = bf.datasets.OfflineDataset(data=train_dict, batch_size=batch_size, adapter=adapter)
 validation_dataset = bf.datasets.OfflineDataset(data=val_dict, batch_size=batch_size, adapter=adapter)
@@ -84,7 +87,6 @@ callbacks = [
     ),
 ]
 
-epochs = 15
 history = approximator.fit(
     epochs=epochs,
     dataset=training_dataset,

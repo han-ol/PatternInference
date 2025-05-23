@@ -1,6 +1,5 @@
 import os
 import pickle
-from functools import partial
 
 import bayesflow as bf
 import numpy as np
@@ -32,17 +31,43 @@ def get_individual_sim_data_std(data_dict):
     return dict(final_states_std=final_states_std)
 
 
-def get_adapter():
-    adapter = (
-        bf.adapters.Adapter()
-        .convert_dtype("float64", "float32")
-        .keep(["parameters", "final_states_std"])
-        .constrain("parameters", lower=0)
-        .rename("parameters", "inference_variables")
-        .rename("final_states_std", "summary_variables")
-        # .standardize(include="inference_variables", momentum=None, axis=0)
-        .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
-    )
+def get_adapter(condition_type: str):
+    match condition_type:
+        case "pure_learner":
+            adapter = (
+                bf.adapters.Adapter()
+                .convert_dtype("float64", "float32")
+                .keep(["parameters", "final_states_std"])
+                .constrain("parameters", lower=0)
+                .rename("parameters", "inference_variables")
+                .rename("final_states_std", "summary_variables")
+                # .standardize(include="inference_variables", momentum=None, axis=0)
+                .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
+            )
+        case "pure_expert":
+            adapter = (
+                bf.adapters.Adapter()
+                .convert_dtype("float64", "float32")
+                .keep(["parameters", "expert_rdhs"])
+                .constrain("parameters", lower=0)
+                .rename("parameters", "inference_variables")
+                .rename("expert_rdhs", "inference_conditions")
+                # .standardize(include="inference_variables", momentum=None, axis=0)
+                .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
+            )
+        case "concat_hybrid":
+            adapter = (
+                bf.adapters.Adapter()
+                .convert_dtype("float64", "float32")
+                .keep(["parameters", "final_states_std", "expert_rdhs"])
+                .constrain("parameters", lower=0)
+                .rename("parameters", "inference_variables")
+                .rename("final_states_std", "summary_variables")
+                .rename("expert_rdhs", "inference_conditions")
+                # .standardize(include="inference_variables", momentum=None, axis=0)
+                .standardize(momentum=None)  # exclude=["patterns", "patterns_std"])
+            )
+
     return adapter
 
 
@@ -99,7 +124,7 @@ def make_data_dicts_from_pickled_data(
         train_dict = pickle.load(f)
         train_dict["parameters"] = train_dict["parameters"][:, :4]
         train_dict |= get_individual_sim_data_std(train_dict)
-        if not (R_max == B == None):
+        if not (R_max is None and B is None):
             train_dict |= get_expert_rdh(sims_path_train, R_max=R_max, B=B)
 
         train_dict = ptp_mask(train_dict, ptp_cutoff)
@@ -110,7 +135,7 @@ def make_data_dicts_from_pickled_data(
         val_dict = pickle.load(f)
         val_dict["parameters"] = val_dict["parameters"][:, :4]
         val_dict |= get_individual_sim_data_std(val_dict)
-        if not (R_max == B == None):
+        if not (R_max is None and B is None):
             val_dict |= get_expert_rdh(sims_path_val, R_max=R_max, B=B)
 
         val_dict = ptp_mask(val_dict, ptp_cutoff)
