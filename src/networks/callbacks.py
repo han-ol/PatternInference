@@ -35,20 +35,26 @@ class PlotDiagnostics(keras.callbacks.Callback):
             self.val_dict["parameters"][: self.num_diag_obs, ...],
             variable_names=self.variable_names,
         )
-        f = bf.diagnostics.plots.calibration_histogram(
-            pdraws["parameters"],
-            self.val_dict["parameters"][: self.num_diag_obs, ...],
-            variable_names=self.variable_names,
-        )
+        plot_path = f"{self.figure_dir}/{self.name}_recovery.png"
+        f.savefig(plot_path)
+
+        # f = bf.diagnostics.plots.calibration_histogram(
+        #     pdraws["parameters"],
+        #     self.val_dict["parameters"][: self.num_diag_obs, ...],
+        #     variable_names=self.variable_names,
+        # )
+
         f = bf.diagnostics.plots.calibration_ecdf(
             pdraws["parameters"],
             self.val_dict["parameters"][: self.num_diag_obs, ...],
             difference=True,
             variable_names=self.variable_names,
         )
-        # f = bf.diagnostics.plots.z_score_contraction(
-        #     pdraws["parameters"], self.val_dict["parameters"][:self.num_diag_obs, ...], variable_names=self.variable_names
-        # )
 
         plot_path = f"{self.figure_dir}/{self.name}_calibration_ecdf.png"
         f.savefig(plot_path)
+
+        # f = bf.diagnostics.plots.z_score_contraction(
+        #     pdraws["parameters"], self.val_dict["parameters"][:self.num_diag_obs, ...],
+        #     variable_names=self.variable_names
+        # )
